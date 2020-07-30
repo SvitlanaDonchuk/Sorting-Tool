@@ -8,7 +8,12 @@ public class Main {
         String type = "";
 
         for (int i = 0; i < args.length; i++) {
-            if (args[i].equals("-dataType")) {
+            if(args[i].equals("-sortIntegers")){
+                type = "sortInteger";
+                break;
+            }
+
+            else if (args[i].equals("-dataType")) {
                 type = args[i + 1];
             }
         }
@@ -22,6 +27,8 @@ public class Main {
                 break;
             case "word":
                 longestWord(scanner);
+                break;
+            case "sortIntegers":
                 break;
             default:
                 System.out.println("Incorrect option! Try again.");
@@ -115,6 +122,77 @@ public class Main {
         int per = 100 / totalWord;
 
         System.out.println("Total words: " + totalWord + ".\n The longest word: " + maxWord + " (" + totalMaxWord + " time(s), " + per + "%).");
+    }
+
+    public static void sortIntegers(Scanner scanner){
+        int totalIntegers = 0;
+        ArrayList<Integer> list = new ArrayList<>();
+
+        while (scanner.hasNextInt()) {
+            int number = scanner.nextInt();
+            list.add(number);
+            totalIntegers++;
+        }
+
+        int[] arr = new int[list.size()];
+        for (int i = 0; i < list.size(); i++) {
+            arr[i] = list.get(i);
+        }
+
+        margeSortIntegers(arr, 0, arr.length);
+
+        System.out.println("Total numbers: " + totalIntegers + ".");
+        System.out.print("Sorted data: ");
+        for (int i = 0; i < arr.length; i++) {
+            System.out.print(arr[i] + " ");
+        }
+
+
+    }
+
+    public static void margeSortIntegers(int[] list, int leftIncl, int rightExcl){
+        if(rightExcl <= leftIncl + 1){
+            return;
+        }
+
+        int mid = leftIncl + (rightExcl - leftIncl) / 2;
+
+        margeSortIntegers(list, leftIncl, mid);
+        margeSortIntegers(list, mid, rightExcl);
+
+        marge(list, leftIncl, mid, rightExcl);
+
+    }
+
+    private static void marge(int[] list, int left, int mid, int right){
+        int i = left;
+        int j = mid;
+        int k = 0;
+
+        int[] temp = new int[right - left];
+
+        while(i < mid && j < right){
+            if(list[i] <= list[j]){
+                temp[k] = list[i];
+                i++;
+            }
+            else{
+                temp[k] = list[j];
+                j++;
+            }
+            k++;
+        }
+
+
+        for (; i < mid; i++, k++) {
+            temp[k] = list[i];
+        }
+
+        for (; j < right; j++, k++) {
+            temp[k] = list[j];
+        }
+
+        System.arraycopy(temp, 0, list, left, temp.length);
     }
 
 }
