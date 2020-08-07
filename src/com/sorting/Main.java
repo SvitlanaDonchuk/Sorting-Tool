@@ -1,154 +1,291 @@
 package com.sorting;
+
 import java.util.*;
+import java.util.Scanner;
+import java.util.stream.Collectors;
 
 public class Main {
     public static void main(final String[] args) {
+
         Scanner scanner = new Scanner(System.in);
 
-        String type = "";
+        String s = "-sortingType";
+        String s1 = "-dataType";
+
+        DataType dataType = null;
+        SortingType sortingType = null;
+
 
         for (int i = 0; i < args.length; i++) {
-            if(args[i].equals("-sortIntegers")){
-                type = "sortInteger";
-                break;
-            }
 
-            else if (args[i].equals("-dataType")) {
-                type = args[i + 1];
+            if (args[i].equals(s)) {
+                sortingType = SortingType.findByLabel(args[i + 1]);
+            } else if (args[i].equals(s1)) {
+                dataType = DataType.findByLabel(args[i + 1]);
             }
         }
 
-        switch (type) {
-            case "long":
-                greatestNumber(scanner);
+        if (sortingType == null) {
+            sortingType = SortingType.NATURAL;
+        }
+
+        if (dataType == null) {
+            System.out.println("Incorrect option! Try again.");
+            System.exit(1);
+        }
+
+        switch (dataType){
+            case LONG:
+                greatestNumber(scanner, sortingType);
                 break;
-            case "line":
-                longestLine(scanner);
+            case LINE:
+                longestLine(scanner, sortingType);
                 break;
-            case "word":
-                longestWord(scanner);
+            case WORD:
+                longestWord(scanner, sortingType);
                 break;
-            case "sortIntegers":
-                break;
-            default:
+            default: {
                 System.out.println("Incorrect option! Try again.");
-        }
-    }
-
-    private static void greatestNumber(Scanner scanner) {
-        int totalCount = 0;
-        int totalMax = 1;
-        long max = Integer.MIN_VALUE;
-
-        while (scanner.hasNextLong()) {
-            long number = scanner.nextLong();
-
-            if (number > max) {
-                max = number;
-                totalMax = 1;
-            } else if (number == max) {
-                totalMax++;
+                System.exit(1);
             }
-
-            totalCount++;
-
         }
 
-        int per = 100 / totalCount;
-
-        System.out.println("Total numbers: " + totalCount + ".\n" + "The greatest number: " + max + " (" + totalMax + " time(s) " + per + "%).");
     }
 
-    private static void longestLine(Scanner scanner){
-        int totalString = 0;
-        int totalMaxString = 1;
-        String maxLine = "";
+    private static void greatestNumber(Scanner scanner, SortingType sortingType) {
 
+        if (sortingType == SortingType.NATURAL) {
 
-        while(scanner.hasNextLine()){
-            String line = scanner.nextLine();
+            List<Integer> arrayList = new ArrayList<>();
+            int totalCount = 0;
 
-            if(line.length() > maxLine.length()){
-                maxLine = line;
-                totalMaxString = 1;
+            while (scanner.hasNextLong()) {
+                int number = scanner.nextInt();
+                arrayList.add(number);
+                totalCount++;
+
             }
-            else if(line.equals(maxLine)){
-                totalMaxString++;
-            }
-            else if(line.length() == maxLine.length()){
-                int rs = line.compareTo(maxLine);
 
-                if(rs > 0){
-                    maxLine = line;
-                    totalMaxString++;
+            int[] arr = new int[arrayList.size()];
+
+            for (int i = 0; i < arr.length; i++) {
+                arr[i] = arrayList.get(i);
+            }
+
+            margeSortIntegers(arr, 0, arr.length);
+
+
+            System.out.print("Total numbers: " + totalCount + "\nSorted data: ");
+
+            for (int num : arr){
+                System.out.print(num +  " ");
+            }
+            return;
+
+        }
+
+        if (sortingType == SortingType.BY_COUNT) {
+
+            List<Integer> arrayList = new ArrayList<>();
+            Map<Integer, Integer> map = new HashMap<>();
+
+            int totalCount = 0;
+
+            while (scanner.hasNextLong()) {
+                int number = scanner.nextInt();
+                arrayList.add(number);
+                totalCount++;
+
+            }
+
+            for (Integer val : arrayList){
+                Integer num = map.get(val);
+
+                if(num == null){
+                    map.put(val, 1);
+                } else {
+                    map.put(val, ++num);
+                }
+
+            }
+
+            Map<Integer, Integer> sorted = map.entrySet().stream()
+                    .sorted(Map.Entry.comparingByValue())
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+                            (e1, e2) -> e1, LinkedHashMap::new));
+
+            System.out.println("Total numbers: " + totalCount + ".");
+
+            for(Integer key : sorted.keySet()){
+                Integer val = sorted.get(key);
+                Long percentage = Math.round((double)val / totalCount * 100);
+
+                System.out.println(String.format("%s: %s  time(s), %s%%", key, val, percentage));
+
+            }
+            return;
+        }
+
+        System.err.println("Not found sorting type " + sortingType);
+
+    }
+    private static void longestWord(Scanner scanner, SortingType sortingType) {
+
+        if (sortingType == SortingType.NATURAL) {
+            List<String> arrayList = new ArrayList<>();
+
+            int totalWords = 0;
+            String temp;
+
+            while(scanner.hasNext()){
+                String string = scanner.next();
+                arrayList.add(string);
+                totalWords++;
+            }
+
+            String[] arr = new String[arrayList.size()];
+
+            for (int i = 0; i < arr.length; i++) {
+                arr[i] = arrayList.get(i);
+            }
+
+            for (int i = 0; i < arr.length; i++) {
+                for (int j = i + 1; j < arr.length; j++) {
+                    if(arr[i].compareTo(arr[j]) > 0){
+                        temp = arr[i];
+                        arr[i] = arr[j];
+                        arr[j] = temp;
+                    }
                 }
             }
 
-            totalString++;
+            System.out.print("Total words: " + totalWords + "\nSorted data: ");
+            for (int i = 0; i < arr.length; i++) {
+                System.out.print(arr[i] + " ");
+            }
+            return;
+
         }
 
-        int per = 100 / totalString;
+        if(sortingType == SortingType.BY_COUNT) {
 
-        System.out.println("Total lines: " + totalString + ".\n" + "The longest line:\n" + maxLine + "\n(" + totalMaxString + " time(s), " + per + "%).");
+            List<String> arrayList = new ArrayList<>();
+            Map<String, Integer> map = new TreeMap<>();
+
+            int totalWords = 0;
+
+            while(scanner.hasNext()){
+                String string = scanner.next();
+                arrayList.add(string);
+                totalWords++;
+            }
+
+            for(String val : arrayList){
+                Integer num = map.get(val);
+
+                if(num == null){
+                    map.put(val, 1);
+                } else {
+                    map.put(val, ++num);
+                }
+            }
+            Map<String, Integer> sorted = map.entrySet().stream()
+                    .sorted(Map.Entry.comparingByValue())
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+                            (e1, e2) -> e1, LinkedHashMap::new));
+
+            System.out.println("Total words: " + totalWords + ".");
+            for(String key : sorted.keySet()){
+                Integer val = sorted.get(key);
+                Long percentage = Math.round((double)val / totalWords * 100);
+
+                System.out.println(String.format("%s: %s  time(s), %s%%", key, val, percentage));
+
+            }
+        }
+
     }
 
-    private static void longestWord(Scanner scanner) {
-        int totalWord = 0;
-        int totalMaxWord = 1;
-        String maxWord = "";
+    private static void longestLine(Scanner scanner, SortingType sortingType) {
 
-        while(scanner.hasNext()){
-            String word = scanner.next();
 
-            if(word.length() > maxWord.length()){
-                maxWord = word;
-                totalMaxWord = 1;
+        if (sortingType == SortingType.NATURAL) {
+
+            List<String> arrayList = new ArrayList<>();
+
+            int totalLines = 0;
+            String temp;
+
+            while(scanner.hasNext()){
+                String string = scanner.nextLine();
+                arrayList.add(string);
+                totalLines++;
             }
-            else if(word.equals(maxWord)){
-                totalMaxWord++;
-            }
-            else if(word.length() == maxWord.length()){
-                int rs = word.compareTo(maxWord);
 
-                if(rs > 0){
-                    maxWord = word;
-                    totalMaxWord++;
+            String[] arr = new String[arrayList.size()];
+
+            for (int i = 0; i < arr.length; i++) {
+                arr[i] = arrayList.get(i);
+            }
+
+            for (int i = 0; i < arrayList.size(); i++) {
+                for (int j = i + 1; j < arrayList.size(); j++) {
+                    if(arr[i].length() < arr[j].length()){
+                        temp = arr[i];
+                        arr[i] = arr[j];
+                        arr[j] = temp;
+                    }
                 }
             }
 
-            totalWord++;
+            System.out.println("Total lines: " + totalLines + "\nSorted data: ");
+            for (int i = 0; i < arr.length; i++) {
+                System.out.println(arr[i] + " ");
+            }
+            return;
         }
 
-        int per = 100 / totalWord;
+        if(sortingType == SortingType.BY_COUNT) {
 
-        System.out.println("Total words: " + totalWord + ".\n The longest word: " + maxWord + " (" + totalMaxWord + " time(s), " + per + "%).");
+            List<String> arrayList = new ArrayList<>();
+            Map<String, Integer> map = new TreeMap<>();
+
+            int totalLines = 0;
+
+            while(scanner.hasNext()){
+                String string = scanner.nextLine();
+                arrayList.add(string);
+                totalLines++;
+            }
+
+            for(String val : arrayList){
+                Integer num = map.get(val);
+
+                if(num == null){
+                    map.put(val, 1);
+                } else {
+                    map.put(val, ++num);
+                }
+            }
+
+            Map<String, Integer> sorted = map.entrySet().stream()
+                    .sorted(Map.Entry.comparingByValue())
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+                            (e1, e2) -> e1, LinkedHashMap::new));
+
+            System.out.println("Total words: " + totalLines + ".");
+            for(String key : sorted.keySet()){
+                Integer val = sorted.get(key);
+                Long percentage = Math.round((double)val / totalLines * 100);
+
+                System.out.println(String.format("%s: %s  time(s), %s%%", key, val, percentage));
+
+            }
+
+        }
+
     }
 
-    public static void sortIntegers(Scanner scanner){
-        int totalIntegers = 0;
-        ArrayList<Integer> list = new ArrayList<>();
-
-        while (scanner.hasNextInt()) {
-            int number = scanner.nextInt();
-            list.add(number);
-            totalIntegers++;
-        }
-
-        int[] arr = new int[list.size()];
-        for (int i = 0; i < list.size(); i++) {
-            arr[i] = list.get(i);
-        }
-
-        margeSortIntegers(arr, 0, arr.length);
-
-        System.out.println("Total numbers: " + totalIntegers + ".");
-        System.out.print("Sorted data: ");
-        for (int i = 0; i < arr.length; i++) {
-            System.out.print(arr[i] + " ");
-        }
-
-
-    }
 
     public static void margeSortIntegers(int[] list, int leftIncl, int rightExcl){
         if(rightExcl <= leftIncl + 1){
@@ -195,5 +332,58 @@ public class Main {
         System.arraycopy(temp, 0, list, left, temp.length);
     }
 
+
+
 }
 
+enum SortingType {
+    NATURAL("natural"),
+    BY_COUNT("byCount")
+    ;
+
+    private String label;
+
+    SortingType(String label) {
+        this.label = label;
+    }
+
+    public String getLabel() {
+        return label;
+    }
+
+    public static SortingType findByLabel(String label) {
+        for (SortingType type : SortingType.values()) {
+            if (label.equalsIgnoreCase(type.getLabel())) {
+                return type;
+            }
+        }
+        return null;
+    }
+}
+
+enum DataType {
+    LINE("line"),
+    WORD("word"),
+    LONG("long")
+    ;
+
+
+    private String label;
+
+    DataType(String label) {
+        this.label = label;
+    }
+
+    public String getLabel() {
+        return label;
+    }
+
+    public static DataType findByLabel(String label) {
+        for (DataType type : DataType.values()) {
+            if (label.equalsIgnoreCase(type.getLabel())) {
+                return type;
+            }
+        }
+        return null;
+    }
+}
