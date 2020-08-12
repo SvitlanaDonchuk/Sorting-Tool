@@ -1,25 +1,49 @@
 package com.sorting;
 
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 import java.util.Scanner;
 import java.util.stream.Collectors;
+import java.io.File;
+
 
 public class Main {
-    public static void main(final String[] args) {
+    public static void main(final String[] args) throws IOException {
 
         Scanner scanner = new Scanner(System.in);
 
         String s = "-sortingType";
         String s1 = "-dataType";
+        String s2 = "-inputFile";
+        String s3 = "-outputFile";
 
         DataType dataType = null;
         SortingType sortingType = null;
+        String inputFileName = null;
+        String outputFileName = null;
 
+        for (int i = 0; i < args.length; i++) {
+
+            if (args[i].equals(s2)) {
+                inputFileName = args[i + 1];
+            } else if (args[i].equals(s3)) {
+                outputFileName = args[i + 1];
+            }
+        }
+
+        File file = new File("./" + outputFileName);
+        FileWriter writer = new FileWriter(file);
 
         for (int i = 0; i < args.length; i++) {
 
             if (args[i].equals(s)) {
-                sortingType = SortingType.findByLabel(args[i + 1]);
+                try {
+                    sortingType = SortingType.findByLabel(args[i + 1]);
+                } catch (Exception e) {
+                    writer.write("No sorting type defined!");
+                }
             } else if (args[i].equals(s1)) {
                 dataType = DataType.findByLabel(args[i + 1]);
             }
@@ -27,43 +51,81 @@ public class Main {
 
         if (sortingType == null) {
             sortingType = SortingType.NATURAL;
+//            writer.write("No sorting type defined!");
         }
 
         if (dataType == null) {
-            System.out.println("Incorrect option! Try again.");
+            writer.write("Incorrect option! Try again.");
+            writer.close();
+            System.out.println(outputFileName);
             System.exit(1);
         }
 
         switch (dataType){
             case LONG:
-                greatestNumber(scanner, sortingType);
+                greatestNumber(scanner, sortingType, inputFileName, file);
                 break;
             case LINE:
-                longestLine(scanner, sortingType);
+                longestLine(scanner, sortingType, inputFileName, file);
                 break;
             case WORD:
-                longestWord(scanner, sortingType);
+                longestWord(scanner, sortingType, inputFileName, file);
                 break;
             default: {
-                System.out.println("Incorrect option! Try again.");
+                writer.write("Incorrect option! Try again.");
                 System.exit(1);
             }
         }
 
+        if(outputFileName != null) {
+            try (Scanner scannerFile = new Scanner(file)) {
+                System.out.println(outputFileName);
+                while (scannerFile.hasNext()) {
+                    System.out.println(scanner.nextLine());
+                }
+            } catch (FileNotFoundException e) {
+                writer.write("No file found");
+            }
+        }
+
+        writer.close();
     }
 
-    private static void greatestNumber(Scanner scanner, SortingType sortingType) {
+    private static void greatestNumber(Scanner scanner, SortingType sortingType, String inputFileName, File file) throws IOException{
+        FileWriter writer = new FileWriter(file);
 
         if (sortingType == SortingType.NATURAL) {
 
+            List<String> arrayStrings = new ArrayList<>();
             List<Integer> arrayList = new ArrayList<>();
             int totalCount = 0;
 
-            while (scanner.hasNextLong()) {
-                int number = scanner.nextInt();
-                arrayList.add(number);
-                totalCount++;
+            if (inputFileName == null) {
+                while (scanner.hasNext()) {
+                    String string = scanner.next();
+                    arrayStrings.add(string);
+                }
+            } else {
+                File inputFile = new File("/Users/svitlanadonchuk/projects/Sorting Tool/" + inputFileName);
+                try(Scanner scannerFile = new Scanner(inputFile)){
+                    while (scannerFile.hasNext()){
+                        String string = scannerFile.next();
+                        arrayStrings.add(string);
+                    }
+                } catch (FileNotFoundException e){
+                    writer.write("Incorrect option! Try again.");
+                }
 
+            }
+
+            for(String str : arrayStrings) {
+                try {
+                    int num = Integer.parseInt(str);
+                    arrayList.add(num);
+                    totalCount++;
+                } catch (Exception e) {
+                    writer.write('\"' + str + '\"' + " isn't a long. It's skipped.");
+                }
             }
 
             int[] arr = new int[arrayList.size()];
@@ -80,8 +142,9 @@ public class Main {
             for (int num : arr){
                 System.out.print(num +  " ");
             }
-            return;
+            writer.close();
 
+            return;
         }
 
         if (sortingType == SortingType.BY_COUNT) {
@@ -91,10 +154,23 @@ public class Main {
 
             int totalCount = 0;
 
-            while (scanner.hasNextLong()) {
-                int number = scanner.nextInt();
-                arrayList.add(number);
-                totalCount++;
+            if (inputFileName == null) {
+                while (scanner.hasNextLong()) {
+                    int number = scanner.nextInt();
+                    arrayList.add(number);
+                    totalCount++;
+                }
+            } else {
+                File inputFile = new File("./" + inputFileName);
+                try(Scanner scannerFile = new Scanner(inputFile)){
+                    while (scannerFile.hasNextLong()){
+                        int number = scannerFile.nextInt();
+                        arrayList.add(number);
+                        totalCount++;
+                    }
+                } catch (FileNotFoundException e){
+                    writer.write("Incorrect option! Try again.");
+                }
 
             }
 
@@ -106,7 +182,6 @@ public class Main {
                 } else {
                     map.put(val, ++num);
                 }
-
             }
 
             Map<Integer, Integer> sorted = map.entrySet().stream()
@@ -114,22 +189,22 @@ public class Main {
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
                             (e1, e2) -> e1, LinkedHashMap::new));
 
-            System.out.println("Total numbers: " + totalCount + ".");
+            System.out.print("Total numbers: " + totalCount + ".");
 
             for(Integer key : sorted.keySet()){
                 Integer val = sorted.get(key);
                 Long percentage = Math.round((double)val / totalCount * 100);
 
-                System.out.println(String.format("%s: %s  time(s), %s%%", key, val, percentage));
+                System.out.print(String.format("\n%s: %s  time(s), %s%%", key, val, percentage));
 
             }
-            return;
+
+            writer.close();
         }
-
-        System.err.println("Not found sorting type " + sortingType);
-
     }
-    private static void longestWord(Scanner scanner, SortingType sortingType) {
+
+    private static void longestWord(Scanner scanner, SortingType sortingType, String inputFile, File file) throws IOException {
+        FileWriter writer = new FileWriter(file);
 
         if (sortingType == SortingType.NATURAL) {
             List<String> arrayList = new ArrayList<>();
@@ -137,10 +212,24 @@ public class Main {
             int totalWords = 0;
             String temp;
 
-            while(scanner.hasNext()){
-                String string = scanner.next();
-                arrayList.add(string);
-                totalWords++;
+            if (inputFile == null) {
+                while (scanner.hasNext()) {
+                    String string = scanner.next();
+                    arrayList.add(string);
+                    totalWords++;
+                }
+            } else {
+                File fileInput = new File("./" + inputFile);
+                try(Scanner scannerFile = new Scanner(fileInput)){
+                    while (scannerFile.hasNext()){
+                        String string = scannerFile.next();
+                        arrayList.add(string);
+                        totalWords++;
+                    }
+                } catch (FileNotFoundException e){
+                    writer.write("Incorrect option! Try again.");
+                }
+
             }
 
             String[] arr = new String[arrayList.size()];
@@ -160,11 +249,12 @@ public class Main {
             }
 
             System.out.print("Total words: " + totalWords + "\nSorted data: ");
-            for (int i = 0; i < arr.length; i++) {
-                System.out.print(arr[i] + " ");
+            for (String s : arr) {
+                System.out.print(s + " ");
             }
-            return;
 
+            writer.close();
+            return;
         }
 
         if(sortingType == SortingType.BY_COUNT) {
@@ -174,40 +264,57 @@ public class Main {
 
             int totalWords = 0;
 
-            while(scanner.hasNext()){
-                String string = scanner.next();
-                arrayList.add(string);
-                totalWords++;
+            if (inputFile == null) {
+                while (scanner.hasNext()) {
+                    String string = scanner.next();
+                    arrayList.add(string);
+                    totalWords++;
+                }
+            } else {
+                File fileInput = new File("./" + inputFile);
+                try(Scanner scannerFile = new Scanner(fileInput)){
+                    while (scannerFile.hasNext()){
+                        String string = scannerFile.next();
+                        arrayList.add(string);
+                        totalWords++;
+                    }
+                } catch (FileNotFoundException e){
+                    writer.write("Incorrect option! Try again.");
+                }
+
             }
 
-            for(String val : arrayList){
+            for(String val : arrayList) {
                 Integer num = map.get(val);
 
-                if(num == null){
+                if (num == null) {
                     map.put(val, 1);
                 } else {
                     map.put(val, ++num);
                 }
             }
+
             Map<String, Integer> sorted = map.entrySet().stream()
                     .sorted(Map.Entry.comparingByValue())
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
                             (e1, e2) -> e1, LinkedHashMap::new));
 
-            System.out.println("Total words: " + totalWords + ".");
+            System.out.print("Total words: " + totalWords + ".");
+
             for(String key : sorted.keySet()){
                 Integer val = sorted.get(key);
                 Long percentage = Math.round((double)val / totalWords * 100);
 
-                System.out.println(String.format("%s: %s  time(s), %s%%", key, val, percentage));
-
+                System.out.print(String.format("\n%s: %s  time(s), %s%%", key, val, percentage));
             }
+
+            writer.close();
         }
 
     }
 
-    private static void longestLine(Scanner scanner, SortingType sortingType) {
-
+    private static void longestLine(Scanner scanner, SortingType sortingType, String inputFile, File file) throws IOException{
+        FileWriter writer = new FileWriter(file);
 
         if (sortingType == SortingType.NATURAL) {
 
@@ -216,10 +323,24 @@ public class Main {
             int totalLines = 0;
             String temp;
 
-            while(scanner.hasNext()){
-                String string = scanner.nextLine();
-                arrayList.add(string);
-                totalLines++;
+            if (inputFile == null) {
+                while (scanner.hasNext()) {
+                    String string = scanner.nextLine();
+                    arrayList.add(string);
+                    totalLines++;
+                }
+            } else {
+                File fileInput = new File("./" + inputFile);
+                try(Scanner scannerFile = new Scanner(fileInput)){
+                    while (scannerFile.hasNextLine()){
+                        String string = scannerFile.nextLine();
+                        arrayList.add(string);
+                        totalLines++;
+                    }
+                } catch (FileNotFoundException e){
+                    writer.write("Incorrect option! Try again.");
+                }
+
             }
 
             String[] arr = new String[arrayList.size()];
@@ -239,23 +360,38 @@ public class Main {
             }
 
             System.out.println("Total lines: " + totalLines + "\nSorted data: ");
-            for (int i = 0; i < arr.length; i++) {
-                System.out.println(arr[i] + " ");
+
+            for (String s : arr) {
+                System.out.println(s + " ");
             }
+            writer.close();
             return;
         }
 
         if(sortingType == SortingType.BY_COUNT) {
-
             List<String> arrayList = new ArrayList<>();
             Map<String, Integer> map = new TreeMap<>();
 
             int totalLines = 0;
 
-            while(scanner.hasNext()){
-                String string = scanner.nextLine();
-                arrayList.add(string);
-                totalLines++;
+            if (inputFile == null) {
+                while (scanner.hasNext()) {
+                    String string = scanner.nextLine();
+                    arrayList.add(string);
+                    totalLines++;
+                }
+            } else {
+                File fileInput = new File("./" + inputFile);
+                try(Scanner scannerFile = new Scanner(fileInput)){
+                    while (scannerFile.hasNextLine()){
+                        String string = scannerFile.nextLine();
+                        arrayList.add(string);
+                        totalLines++;
+                    }
+                } catch (FileNotFoundException e){
+                    writer.write("Incorrect option! Try again.");
+                }
+
             }
 
             for(String val : arrayList){
@@ -273,19 +409,19 @@ public class Main {
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
                             (e1, e2) -> e1, LinkedHashMap::new));
 
-            System.out.println("Total words: " + totalLines + ".");
+            System.out.print("Total words: " + totalLines + ".");
+
             for(String key : sorted.keySet()){
                 Integer val = sorted.get(key);
                 Long percentage = Math.round((double)val / totalLines * 100);
 
-                System.out.println(String.format("%s: %s  time(s), %s%%", key, val, percentage));
+                System.out.print(String.format("\n%s: %s  time(s), %s%%", key, val, percentage));
 
             }
 
+            writer.close();
         }
-
     }
-
 
     public static void margeSortIntegers(int[] list, int leftIncl, int rightExcl){
         if(rightExcl <= leftIncl + 1){
@@ -298,7 +434,6 @@ public class Main {
         margeSortIntegers(list, mid, rightExcl);
 
         marge(list, leftIncl, mid, rightExcl);
-
     }
 
     private static void marge(int[] list, int left, int mid, int right){
@@ -320,7 +455,6 @@ public class Main {
             k++;
         }
 
-
         for (; i < mid; i++, k++) {
             temp[k] = list[i];
         }
@@ -331,9 +465,6 @@ public class Main {
 
         System.arraycopy(temp, 0, list, left, temp.length);
     }
-
-
-
 }
 
 enum SortingType {
@@ -366,7 +497,6 @@ enum DataType {
     WORD("word"),
     LONG("long")
     ;
-
 
     private String label;
 
